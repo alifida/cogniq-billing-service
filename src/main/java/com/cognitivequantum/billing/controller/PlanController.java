@@ -1,7 +1,7 @@
 package com.cognitivequantum.billing.controller;
 
 import com.cognitivequantum.billing.dto.PlanDto;
-import com.cognitivequantum.billing.service.PlanService;
+import com.cognitivequantum.billing.service.subscription.PlanService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

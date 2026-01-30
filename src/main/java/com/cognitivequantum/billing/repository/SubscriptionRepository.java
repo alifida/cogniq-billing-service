@@ -12,9 +12,19 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
 
 	Optional<Subscription> findByUserIdAndStatus(UUID userId, SubscriptionStatus status);
 
+	Optional<Subscription> findByOrgIdAndStatus(UUID orgId, SubscriptionStatus status);
+
 	List<Subscription> findAllByUserIdOrderByCreatedAtDesc(UUID userId);
+
+	List<Subscription> findAllByOrgIdOrderByCreatedAtDesc(UUID orgId);
 
 	Optional<Subscription> findByIdAndUserId(UUID id, UUID userId);
 
+	Optional<Subscription> findByIdAndOrgId(UUID id, UUID orgId);
+
+	Optional<Subscription> findByStripeSubscriptionId(String stripeSubscriptionId);
+
 	boolean existsByUserIdAndStatus(UUID userId, SubscriptionStatus status);
+
+	boolean existsByOrgIdAndStatus(UUID orgId, SubscriptionStatus status);
 }

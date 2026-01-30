@@ -17,7 +17,7 @@ public class PrometheusMetricsConfig {
 
 	@Bean
 	public MeterBinder subscriptionsGauge(MeterRegistry registry) {
-		return registry1 -> Gauge.builder("billing_subscriptions_active_count", subscriptionRepository,
+		return registry1 -> Gauge.builder("active_subscriptions_gauge", subscriptionRepository,
 				repo -> repo.findAll().stream().filter(s -> s.getStatus() == SubscriptionStatus.ACTIVE).count())
 			.description("Number of active subscriptions")
 			.register(registry1);

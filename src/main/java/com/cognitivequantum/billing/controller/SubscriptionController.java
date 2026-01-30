@@ -1,14 +1,13 @@
 package com.cognitivequantum.billing.controller;
 
 import com.cognitivequantum.billing.config.UserIdPrincipal;
-import com.cognitivequantum.billing.dto.SubscribeRequest;
 import com.cognitivequantum.billing.dto.SubscriptionDto;
-import com.cognitivequantum.billing.service.SubscriptionService;
+import com.cognitivequantum.billing.util.TenantContext;
+import com.cognitivequantum.billing.service.subscription.SubscriptionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -35,40 +34,41 @@ public class SubscriptionController {
 		return p.userId();
 	}
 
+	private static UUID currentOrgId() {
+		if (SecurityContextHolder.getContext().getAuthentication() != null
+			&& SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof UserIdPrincipal p) {
+			return p.orgId();
+		}
+		return TenantContext.getOrgId();
+	}
+
 	@GetMapping
-	@Operation(summary = "Get current subscription", description = "Returns active subscription for the current user")
+	@Operation(summary = "Get current subscription", description = "Returns active subscription for the current org (or user when org not in JWT)")
 	@ApiResponse(responseCode = "200", description = "Current subscription")
 	@ApiResponse(responseCode = "404", description = "No active subscription")
 	public ResponseEntity<SubscriptionDto> getCurrentSubscription() {
+		UUID orgId = currentOrgId();
 		UUID userId = currentUserId();
-		return subscriptionService.getCurrentSubscriptionOptional(userId)
+		return subscriptionService.getCurrentSubscriptionOptional(orgId, userId)
 			.map(ResponseEntity::ok)
 			.orElse(ResponseEntity.noContent().build());
 	}
 
 	@GetMapping("/history")
-	@Operation(summary = "List subscription history", description = "Returns all subscriptions for the current user")
+	@Operation(summary = "List subscription history", description = "Returns all subscriptions for the current org/user")
 	public ResponseEntity<List<SubscriptionDto>> listSubscriptions() {
+		UUID orgId = currentOrgId();
 		UUID userId = currentUserId();
-		return ResponseEntity.ok(subscriptionService.listSubscriptions(userId));
-	}
-
-	@PostMapping
-	@Operation(summary = "Subscribe to a plan", description = "Creates or changes subscription to the given plan")
-	@ApiResponse(responseCode = "200", description = "Subscription created")
-	@ApiResponse(responseCode = "409", description = "Already has active subscription")
-	public ResponseEntity<SubscriptionDto> subscribe(@Valid @RequestBody SubscribeRequest request) {
-		UUID userId = currentUserId();
-		SubscriptionDto dto = subscriptionService.subscribe(userId, request);
-		return ResponseEntity.ok(dto);
+		return ResponseEntity.ok(subscriptionService.listSubscriptions(orgId, userId));
 	}
 
 	@PostMapping("/cancel")
 	@Operation(summary = "Cancel at period end", description = "Sets subscription to cancel at end of current period")
 	@ApiResponse(responseCode = "200", description = "Cancellation scheduled")
 	public ResponseEntity<SubscriptionDto> cancelAtPeriodEnd() {
+		UUID orgId = currentOrgId();
 		UUID userId = currentUserId();
-		SubscriptionDto dto = subscriptionService.cancelAtPeriodEnd(userId);
+		SubscriptionDto dto = subscriptionService.cancelAtPeriodEnd(orgId, userId);
 		return ResponseEntity.ok(dto);
 	}
 }

@@ -7,8 +7,11 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "subscriptions", indexes = {
+	@Index(name = "idx_subscription_org_id", columnList = "org_id"),
 	@Index(name = "idx_subscription_user_id", columnList = "user_id"),
-	@Index(name = "idx_subscription_status", columnList = "status")
+	@Index(name = "idx_subscription_status", columnList = "status"),
+	@Index(name = "idx_subscription_stripe_customer", columnList = "stripe_customer_id"),
+	@Index(name = "idx_subscription_stripe_sub", columnList = "stripe_subscription_id")
 })
 @Getter
 @Setter
@@ -21,18 +24,28 @@ public class Subscription {
 	@GeneratedValue(strategy = GenerationType.UUID)
 	private UUID id;
 
+	@Column(name = "org_id")
+	private UUID orgId;
+
 	@Column(name = "user_id", nullable = false)
 	private UUID userId;
 
-	@Column(name = "plan_id", nullable = false)
-	private UUID planId;
+	@Column(name = "stripe_customer_id", length = 256)
+	private String stripeCustomerId;
+
+	@Column(name = "stripe_subscription_id", length = 256)
+	private String stripeSubscriptionId;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "plan_tier", nullable = false, length = 32)
+	private PlanTier planTier;
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
 	@Builder.Default
 	private SubscriptionStatus status = SubscriptionStatus.ACTIVE;
 
-	@Column(name = "current_period_start", nullable = false)
+	@Column(name = "current_period_start")
 	private LocalDateTime currentPeriodStart;
 
 	@Column(name = "current_period_end", nullable = false)
@@ -44,9 +57,6 @@ public class Subscription {
 
 	@Column(name = "cancelled_at")
 	private LocalDateTime cancelledAt;
-
-	@Column(name = "external_id", length = 256)
-	private String externalId;
 
 	@Column(name = "created_at", updatable = false)
 	private LocalDateTime createdAt;

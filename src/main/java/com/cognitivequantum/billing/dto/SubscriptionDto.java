@@ -1,5 +1,6 @@
 package com.cognitivequantum.billing.dto;
 
+import com.cognitivequantum.billing.entity.PlanTier;
 import com.cognitivequantum.billing.entity.SubscriptionStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -20,8 +21,8 @@ public class SubscriptionDto {
 	@Schema(description = "Subscription ID")
 	private UUID id;
 
-	@Schema(description = "Plan ID")
-	private UUID planId;
+	@Schema(description = "Plan tier (FREE, PRO, ENTERPRISE)")
+	private PlanTier planTier;
 
 	@Schema(description = "Plan name", example = "Enterprise Quantum")
 	private String planName;
@@ -46,4 +47,10 @@ public class SubscriptionDto {
 
 	@Schema(description = "When subscription was cancelled if applicable")
 	private LocalDateTime cancelledAt;
+
+	@Schema(description = "Stripe customer ID")
+	private String stripeCustomerId;
+
+	@Schema(description = "Stripe subscription ID")
+	private String stripeSubscriptionId;
 }

@@ -36,7 +36,8 @@ public class UsageController {
 	@GetMapping
 	@Operation(summary = "Get usage summary", description = "Returns used quantities and limits for current period (e.g. compute hours, team seats)")
 	public ResponseEntity<UsageSummaryDto> getUsage() {
+		UUID orgId = com.cognitivequantum.billing.util.TenantContext.getOrgId();
 		UUID userId = currentUserId();
-		return ResponseEntity.ok(usageService.getUsageSummary(userId));
+		return ResponseEntity.ok(usageService.getUsageSummary(orgId, userId));
 	}
 }

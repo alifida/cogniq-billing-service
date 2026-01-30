@@ -5,6 +5,8 @@ import com.cognitivequantum.billing.entity.Plan;
 import com.cognitivequantum.billing.entity.Subscription;
 import com.cognitivequantum.billing.entity.UsageType;
 import com.cognitivequantum.billing.repository.UsageRecordRepository;
+import com.cognitivequantum.billing.service.subscription.PlanService;
+import com.cognitivequantum.billing.service.subscription.SubscriptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,8 +26,8 @@ public class UsageService {
 	private final PlanService planService;
 
 	@Transactional(readOnly = true)
-	public UsageSummaryDto getUsageSummary(UUID userId) {
-		Subscription sub = subscriptionService.getActiveSubscriptionEntity(userId);
+	public UsageSummaryDto getUsageSummary(UUID orgId, UUID userId) {
+		Subscription sub = subscriptionService.getActiveSubscriptionEntity(orgId, userId);
 		YearMonth now = YearMonth.now();
 		LocalDateTime periodStart = now.atDay(1).atStartOfDay();
 		LocalDateTime periodEnd = now.plusMonths(1).atDay(1).atStartOfDay();
@@ -38,11 +40,11 @@ public class UsageService {
 			Long sum = usageRecordRepository.sumQuantityByUserIdAndUsageTypeAndPeriod(userId, type, periodStart, periodEnd);
 			used.put(type, sum != null ? sum : 0L);
 			int limit = 0;
-			if (sub != null) {
-				Plan plan = planService.getPlanEntity(sub.getPlanId());
-				if (plan.getLimits() != null && plan.getLimits().containsKey(type.name().toLowerCase())) {
-					limit = plan.getLimits().get(type.name().toLowerCase());
-				}
+			if (sub != null && sub.getPlanTier() != null) {
+				limit = planService.getPlanBySlug(sub.getPlanTier().name())
+					.filter(plan -> plan.getLimits() != null && plan.getLimits().containsKey(type.name().toLowerCase()))
+					.map(plan -> plan.getLimits().get(type.name().toLowerCase()))
+					.orElse(0);
 			}
 			limits.put(type, limit);
 			int pct = limit > 0 ? (int) Math.min(100, (used.get(type) * 100) / limit) : 0;

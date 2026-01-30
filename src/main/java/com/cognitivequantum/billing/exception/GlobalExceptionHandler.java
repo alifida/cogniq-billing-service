@@ -24,6 +24,16 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", e.getMessage()));
 	}
 
+	@ExceptionHandler(PaymentFailedException.class)
+	public ResponseEntity<Map<String, String>> handlePaymentFailed(PaymentFailedException e) {
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
+	}
+
+	@ExceptionHandler(InsufficientCreditsException.class)
+	public ResponseEntity<Map<String, String>> handleInsufficientCredits(InsufficientCreditsException e) {
+		return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).body(Map.of("message", e.getMessage()));
+	}
+
 	@ExceptionHandler(AccessDeniedException.class)
 	public ResponseEntity<Map<String, String>> handleAccessDenied(AccessDeniedException e) {
 		return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Access denied"));

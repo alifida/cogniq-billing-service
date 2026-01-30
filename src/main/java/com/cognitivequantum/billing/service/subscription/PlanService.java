@@ -1,4 +1,4 @@
-package com.cognitivequantum.billing.service;
+package com.cognitivequantum.billing.service.subscription;
 
 import com.cognitivequantum.billing.dto.PlanDto;
 import com.cognitivequantum.billing.entity.Plan;
@@ -33,6 +33,10 @@ public class PlanService {
 	public Plan getPlanEntity(UUID planId) {
 		return planRepository.findById(planId)
 			.orElseThrow(() -> new ResourceNotFoundException("Plan not found: " + planId));
+	}
+
+	public java.util.Optional<Plan> getPlanBySlug(String slug) {
+		return planRepository.findBySlug(slug);
 	}
 
 	private PlanDto toDto(Plan p) {
