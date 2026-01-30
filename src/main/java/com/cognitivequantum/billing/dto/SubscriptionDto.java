@@ -53,4 +53,7 @@ public class SubscriptionDto {
 
 	@Schema(description = "Stripe subscription ID")
 	private String stripeSubscriptionId;
+
+	@Schema(description = "Max users (team seats) allowed by plan")
+	private Integer maxUsers;
 }

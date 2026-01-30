@@ -1,8 +1,10 @@
 package com.cognitivequantum.billing.controller;
 
 import com.cognitivequantum.billing.config.UserIdPrincipal;
+import com.cognitivequantum.billing.dto.SubscribeRequest;
 import com.cognitivequantum.billing.dto.SubscriptionDto;
 import com.cognitivequantum.billing.util.TenantContext;
+import jakarta.validation.Valid;
 import com.cognitivequantum.billing.service.subscription.SubscriptionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -52,6 +54,20 @@ public class SubscriptionController {
 		return subscriptionService.getCurrentSubscriptionOptional(orgId, userId)
 			.map(ResponseEntity::ok)
 			.orElse(ResponseEntity.noContent().build());
+	}
+
+	@PostMapping
+	@Operation(summary = "Subscribe to a plan", description = "Creates a new subscription for the current org (e.g. after signup when user has no plan)")
+	@ApiResponse(responseCode = "201", description = "Subscription created")
+	@ApiResponse(responseCode = "400", description = "Invalid plan or org already has subscription")
+	public ResponseEntity<SubscriptionDto> subscribe(@Valid @RequestBody SubscribeRequest request) {
+		UUID orgId = currentOrgId();
+		UUID userId = currentUserId();
+		if (orgId == null) {
+			throw new IllegalStateException("No organization in session; sign up with a business first");
+		}
+		SubscriptionDto dto = subscriptionService.createSubscription(orgId, userId, request.getPlanId());
+		return ResponseEntity.status(201).body(dto);
 	}
 
 	@GetMapping("/history")

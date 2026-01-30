@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 public class SubscriptionService {
 
 	private final SubscriptionRepository subscriptionRepository;
+	private final PlanService planService;
 
 	private java.util.Optional<Subscription> findActiveByBillingKey(UUID orgId, UUID userId) {
 		if (orgId != null) {
@@ -75,6 +77,39 @@ public class SubscriptionService {
 		return findActiveByBillingKey(orgId, userId).orElse(null);
 	}
 
+	/**
+	 * Create a new subscription for the org (e.g. after signup when user chooses a plan).
+	 * Maps plan ID to PlanTier via plan slug. Free plan has no Stripe IDs.
+	 */
+	@Transactional
+	public SubscriptionDto createSubscription(UUID orgId, UUID userId, UUID planId) {
+		if (findActiveByBillingKey(orgId, userId).isPresent()) {
+			throw new RuntimeException("You already have an active subscription");
+		}
+		com.cognitivequantum.billing.entity.Plan plan = planService.getPlanEntity(planId);
+		PlanTier tier;
+		try {
+			tier = PlanTier.valueOf(plan.getSlug());
+		} catch (IllegalArgumentException e) {
+			throw new RuntimeException("Invalid plan slug: " + plan.getSlug());
+		}
+		LocalDateTime now = LocalDateTime.now();
+		LocalDateTime periodEnd = now.plusMonths(1);
+		Subscription sub = Subscription.builder()
+			.orgId(orgId)
+			.userId(userId)
+			.planId(planId)
+			.planTier(tier)
+			.status(SubscriptionStatus.ACTIVE)
+			.currentPeriodStart(now)
+			.currentPeriodEnd(periodEnd)
+			.cancelAtPeriodEnd(false)
+			.build();
+		sub = subscriptionRepository.save(sub);
+		log.info("Created subscription for org {} user {} plan {}", orgId, userId, tier);
+		return toDto(sub);
+	}
+
 	private SubscriptionDto toDto(Subscription sub) {
 		PlanTier tier = sub.getPlanTier();
 		String planName = tier == null ? "Unknown" : switch (tier) {
@@ -88,6 +123,13 @@ public class SubscriptionService {
 			case PRO -> "$99 / Month";
 			case ENTERPRISE -> "$499 / Month";
 		};
+		Integer maxUsers = null;
+		if (tier != null) {
+			maxUsers = planService.getPlanBySlug(tier.name())
+				.map(p -> p.getLimits() != null && p.getLimits().containsKey("team_seats")
+					? p.getLimits().get("team_seats") : 1)
+				.orElse(1);
+		}
 		return SubscriptionDto.builder()
 			.id(sub.getId())
 			.planTier(tier)
@@ -101,6 +143,17 @@ public class SubscriptionService {
 			.cancelledAt(sub.getCancelledAt())
 			.stripeCustomerId(sub.getStripeCustomerId())
 			.stripeSubscriptionId(sub.getStripeSubscriptionId())
+			.maxUsers(maxUsers)
 			.build();
+	}
+
+	/** Returns max users (team_seats) for an org's active subscription; for internal/auth service. */
+	@Transactional(readOnly = true)
+	public int getMaxUsersForOrg(UUID orgId) {
+		return findActiveByBillingKey(orgId, null)
+			.map(sub -> planService.getPlanBySlug(sub.getPlanTier().name())
+				.map(p -> p.getLimits() != null && p.getLimits().containsKey("team_seats") ? p.getLimits().get("team_seats") : 1)
+				.orElse(1))
+			.orElse(1);
 	}
 }

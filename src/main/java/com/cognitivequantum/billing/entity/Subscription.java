@@ -30,6 +30,9 @@ public class Subscription {
 	@Column(name = "user_id", nullable = false)
 	private UUID userId;
 
+	@Column(name = "plan_id")
+	private UUID planId;
+
 	@Column(name = "stripe_customer_id", length = 256)
 	private String stripeCustomerId;
 

@@ -18,6 +18,4 @@ public class AuthUserDto {
 	private String fullName;
 	/** Organization ID (billing entity); from Auth service internal user endpoint */
 	private UUID orgId;
-	/** Branch ID (data container); from Auth service internal user endpoint */
-	private UUID branchId;
 }

@@ -37,7 +37,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 	private static final String HEADER_USER_ID = "X-User-Id";
 	private static final String HEADER_ORG_ID = "X-Org-Id";
-	private static final String HEADER_BRANCH_ID = "X-Branch-Id";
 	private static final String HEADER_AUTHORIZATION = "Authorization";
 	private static final String BEARER_PREFIX = "Bearer ";
 
@@ -56,17 +55,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			}
 			UUID userId = null;
 			UUID orgId = null;
-			String branchId = null;
 			List<SimpleGrantedAuthority> roles = Collections.emptyList();
 
 			String hUserId = request.getHeader(HEADER_USER_ID);
 			String hOrgId = request.getHeader(HEADER_ORG_ID);
-			String hBranchId = request.getHeader(HEADER_BRANCH_ID);
 			if (hUserId != null && !hUserId.isBlank()) {
 				try {
 					userId = UUID.fromString(hUserId.trim());
 					if (hOrgId != null && !hOrgId.isBlank()) orgId = UUID.fromString(hOrgId.trim());
-					if (hBranchId != null && !hBranchId.isBlank()) branchId = hBranchId.trim();
 				} catch (IllegalArgumentException e) {
 					log.warn("Invalid tenant headers");
 				}
@@ -81,8 +77,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 						if (userIdClaim != null) userId = UUID.fromString(userIdClaim.toString());
 						Object orgIdClaim = claims.get("org_id");
 						if (orgIdClaim != null) orgId = UUID.fromString(orgIdClaim.toString());
-						Object branchIdClaim = claims.get("branch_id");
-						if (branchIdClaim != null) branchId = branchIdClaim.toString();
 						@SuppressWarnings("unchecked")
 						List<String> roleList = claims.get("roles", List.class);
 						if (roleList != null) {
@@ -96,8 +90,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 				}
 			}
 			if (userId != null) {
-				com.cognitivequantum.billing.util.TenantContext.set(orgId, branchId, userId);
-				UserIdPrincipal principal = UserIdPrincipal.of(userId, orgId, branchId);
+				com.cognitivequantum.billing.util.TenantContext.set(orgId, userId);
+				UserIdPrincipal principal = UserIdPrincipal.of(userId, orgId);
 				UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
 					principal, null, roles.isEmpty() ? List.of(new SimpleGrantedAuthority("ROLE_USER")) : roles);
 				SecurityContextHolder.getContext().setAuthentication(auth);
