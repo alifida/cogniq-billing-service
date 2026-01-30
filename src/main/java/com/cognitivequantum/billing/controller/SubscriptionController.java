@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/billing/subscription")
+@RequestMapping("/subscription")
 @RequiredArgsConstructor
 @Tag(name = "Subscription", description = "Current subscription, subscribe, cancel")
 @SecurityRequirement(name = "bearerAuth")

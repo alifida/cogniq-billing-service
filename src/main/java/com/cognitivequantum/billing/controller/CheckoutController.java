@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/billing/checkout")
+@RequestMapping("/checkout")
 @RequiredArgsConstructor
 @Tag(name = "Checkout", description = "Stripe Checkout Session for subscription")
 @SecurityRequirement(name = "bearerAuth")

@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/billing/credits")
+@RequestMapping("/credits")
 @RequiredArgsConstructor
 @Tag(name = "Credits", description = "Credit balance and consume (e.g. Orchestrator calls consume when starting job)")
 @SecurityRequirement(name = "bearerAuth")

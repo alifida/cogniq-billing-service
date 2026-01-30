@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/billing/usage")
+@RequestMapping("/usage")
 @RequiredArgsConstructor
 @Tag(name = "Usage", description = "Current period usage and limits")
 @SecurityRequirement(name = "bearerAuth")

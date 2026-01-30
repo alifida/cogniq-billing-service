@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
  * Stripe webhooks; public endpoint with Stripe Signature Verification.
  */
 @RestController
-@RequestMapping("/api/billing/webhooks")
+@RequestMapping("/webhooks")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Webhooks", description = "Stripe webhook (invoice.paid, checkout.session.completed); uses Stripe Signature Verification")

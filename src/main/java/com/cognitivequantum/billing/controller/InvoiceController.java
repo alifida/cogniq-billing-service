@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/billing/invoices")
+@RequestMapping("/invoices")
 @RequiredArgsConstructor
 @Tag(name = "Invoices", description = "Billing history and invoice details")
 @SecurityRequirement(name = "bearerAuth")

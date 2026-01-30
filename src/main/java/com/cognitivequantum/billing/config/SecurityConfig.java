@@ -24,10 +24,9 @@ public class SecurityConfig {
 			.csrf(csrf -> csrf.disable())
 			.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(auth -> auth
-				.requestMatchers("/actuator/**", "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
-				.requestMatchers("/api/billing/webhooks").permitAll()
-				.requestMatchers("/api/billing/plans").permitAll()
-				.requestMatchers("/api/billing/**").authenticated()
+				.requestMatchers("/actuator/**", "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs", "/v3/api-docs/**").permitAll()
+				.requestMatchers("/webhooks", "/webhooks/**").permitAll()
+				.requestMatchers("/plans").permitAll()
 				.anyRequest().authenticated()
 			)
 			.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

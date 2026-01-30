@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/billing/plans")
+@RequestMapping("/plans")
 @RequiredArgsConstructor
 @Tag(name = "Plans", description = "List and get subscription plans")
 public class PlanController {

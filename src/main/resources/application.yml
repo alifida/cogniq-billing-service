@@ -1,5 +1,8 @@
 server:
   port: 8084
+  servlet:
+    context-path: /
+  forward-headers-strategy: framework
 
 spring:
   application:
@@ -15,12 +18,13 @@ spring:
       ddl-auto: update
     show-sql: true
 
-# Swagger / OpenAPI (accessible via Gateway at /api/billing/v3/api-docs)
+# Swagger: relative url so UI works both direct (port) and via gateway (/api/billing/...)
 springdoc:
   api-docs:
-    path: /api/billing/v3/api-docs
+    path: /v3/api-docs
   swagger-ui:
-    path: /api/billing/swagger-ui.html
+    path: /swagger-ui.html
+    url: v3/api-docs
 
 # Actuator & Prometheus
 management:
