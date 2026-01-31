@@ -1,5 +1,7 @@
 package com.cognitivequantum.billing.service.credit;
 
+import com.cognitivequantum.billing.client.NotificationClient;
+import com.cognitivequantum.billing.client.dto.NotificationRequestDto;
 import com.cognitivequantum.billing.dto.BillingSummaryDto;
 import com.cognitivequantum.billing.dto.CreditBalanceDto;
 import com.cognitivequantum.billing.entity.CreditBalance;
@@ -19,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -29,6 +32,7 @@ public class CreditService {
 
 	private final CreditBalanceRepository creditBalanceRepository;
 	private final TransactionRepository transactionRepository;
+	private final NotificationClient notificationClient;
 	private final MeterRegistry meterRegistry;
 
 	/** Resolve balance by org (billing entity) when orgId present, else by user (legacy). */
@@ -78,6 +82,20 @@ public class CreditService {
 			.build();
 		transactionRepository.save(tx);
 		log.info("Credits consumed: orgId={}, userId={}, amount={}, correlationId={}, availableAfter={}", orgId, userId, amount, corrId, balance.getAvailableCredits());
+		// Credit low warning: below 10% -> in-app toast
+		int total = balance.getTotalCredits();
+		available = balance.getAvailableCredits();
+		if (total > 0 && available * 10 <= total) {
+			try {
+				UUID notifyOrgId = orgId != null ? orgId : userId;
+				notificationClient.send(new NotificationRequestDto(
+					notifyOrgId, userId, null, "CREDIT_LOW",
+					List.of("WEB_SOCKET"), Map.of("name", "User")
+				));
+			} catch (Exception e) {
+				log.warn("Failed to send CREDIT_LOW notification: {}", e.getMessage());
+			}
+		}
 		return toDto(balance);
 	}
 

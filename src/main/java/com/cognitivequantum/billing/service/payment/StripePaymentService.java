@@ -1,7 +1,9 @@
 package com.cognitivequantum.billing.service.payment;
 
 import com.cognitivequantum.billing.client.AuthClient;
+import com.cognitivequantum.billing.client.NotificationClient;
 import com.cognitivequantum.billing.client.dto.AuthUserDto;
+import com.cognitivequantum.billing.client.dto.NotificationRequestDto;
 import com.cognitivequantum.billing.entity.PlanTier;
 import com.cognitivequantum.billing.entity.Subscription;
 import com.cognitivequantum.billing.entity.SubscriptionStatus;
@@ -31,6 +33,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -44,6 +47,7 @@ public class StripePaymentService {
 	private final SubscriptionRepository subscriptionRepository;
 	private final CreditService creditService;
 	private final AuthClient authClient;
+	private final NotificationClient notificationClient;
 	private final CircuitBreakerRegistry circuitBreakerRegistry;
 	private final MeterRegistry meterRegistry;
 
@@ -205,6 +209,23 @@ public class StripePaymentService {
 		creditService.provision(sub.getOrgId(), sub.getUserId(), credits, com.cognitivequantum.billing.entity.TransactionType.SUBSCRIPTION_PURCHASE, invoice.getId());
 		meterRegistry.counter("payment_success_total", "plan_tier", sub.getPlanTier().name()).increment();
 		log.info("invoice.paid processed: userId={}, subscriptionId={}, credits={}", sub.getUserId(), subscriptionId, credits);
+		// Notify user: email + in-app
+		try {
+			AuthUserDto user = authClient.getUserById(sub.getUserId());
+			String email = user != null ? user.getEmail() : null;
+			String name = user != null && user.getFullName() != null ? user.getFullName() : "User";
+			UUID orgId = sub.getOrgId() != null ? sub.getOrgId() : sub.getUserId();
+			notificationClient.send(new NotificationRequestDto(
+				orgId,
+				sub.getUserId(),
+				email,
+				"BILLING_SUCCESS",
+				List.of("EMAIL", "WEB_SOCKET"),
+				Map.of("amount", "Payment received", "credits", String.valueOf(credits), "name", name)
+			));
+		} catch (Exception e) {
+			log.warn("Failed to send BILLING_SUCCESS notification: {}", e.getMessage());
+		}
 	}
 
 	@Transactional
